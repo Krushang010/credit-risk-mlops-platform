@@ -1,0 +1,6 @@
+{
+  "credit_utilization_ratio": 30,
+  "delinquency_ratio": 0.1,
+  "loan_to_income": 2.0,
+  "age": 35
+}

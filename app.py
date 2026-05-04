@@ -2,6 +2,19 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
 import joblib
+import logging
+import json
+from datetime import datetime
+import os
+
+# ✅ Ensure logs folder exists
+os.makedirs("logs", exist_ok=True)
+
+logging.basicConfig(
+    filename="logs/predictions.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s"
+)
 
 # Load artifact
 artifact = joblib.load("artifacts/model_data.joblib")
@@ -18,9 +31,9 @@ app = FastAPI()
 def home():
     return {"message": "API is running"}
 
-# ===============================
-# INPUT SCHEMA (RAW FEATURES)
-# ===============================
+
+# INPUT SCHEMA
+
 class LoanInput(BaseModel):
     credit_utilization_ratio: float
     delinquency_ratio: float
@@ -37,14 +50,11 @@ class LoanInput(BaseModel):
     loan_to_balance: float
 
 
-# ===============================
 # WOE TRANSFORM
-# ===============================
+
 def apply_woe(df):
 
-    # ===============================
-    # CONTINUOUS
-    # ===============================
+    # Continuous
     for col in woe_cont:
         bins = bin_edges[col]
 
@@ -59,9 +69,7 @@ def apply_woe(df):
 
         df.drop(columns=["_bin"], inplace=True)
 
-    # ===============================
-    # CATEGORICAL
-    # ===============================
+    # Categorical
     for col in woe_cat:
         if col in df.columns:
             df[col + "_woe"] = (
@@ -71,24 +79,38 @@ def apply_woe(df):
                 .fillna(0)
             )
 
-    return df   # 🔥 THIS WAS MISSING
-# ===============================
+    return df
+
+
 # PREDICTION
-# ===============================
+
 @app.post("/predict")
 def predict(data: LoanInput):
 
-    df = pd.DataFrame([data.dict()])
+    input_data = data.dict()
+
+    df = pd.DataFrame([input_data])
 
     # Apply WOE
     df = apply_woe(df)
 
-    # Select model features
+    # Select features
     df = df[features]
 
     prob = model.predict_proba(df)[0][1]
 
-    return {
+    output = {
         "default_probability": float(prob),
         "risk_flag": int(prob > 0.6)
     }
+
+    # ✅ Proper logging (kept for Evidently later)
+    log_entry = {
+        "timestamp": str(datetime.now()),
+        "input": input_data,
+        "output": output
+    }
+
+    logging.info(json.dumps(log_entry))
+
+    return output
