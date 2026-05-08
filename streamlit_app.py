@@ -207,67 +207,76 @@ elif page == "📊 Monitoring Dashboard":
     # =========================
     # LOAD DATA
     # =========================
+    import os
 
-    df = pd.read_csv("metrics/drift_history.csv")
+    drift_path = "metrics/drift_history.csv"
 
-    # =========================
-    # RAW TABLE
-    # =========================
+    if os.path.exists(drift_path):
 
-    st.subheader("📋 Monitoring History")
+        df = pd.read_csv(drift_path)
 
-    st.dataframe(df, use_container_width=True)
+        # =========================
+        # RAW TABLE
+        # =========================
 
-    # =========================
-    # DRIFT RATIO TREND
-    # =========================
+        st.subheader("📋 Monitoring History")
 
-    st.subheader("📈 Drift Ratio Over Time")
+        st.dataframe(df, use_container_width=True)
 
-    fig1 = px.line(
-        df,
-        x="date",
-        y="drift_ratio",
-        markers=True,
-        title="Drift Ratio Trend"
-    )
+        # =========================
+        # DRIFT RATIO TREND
+        # =========================
 
-    st.plotly_chart(fig1, use_container_width=True)
+        st.subheader("📈 Drift Ratio Over Time")
 
-    # =========================
-    # DRIFTED COLUMNS
-    # =========================
+        fig1 = px.line(
+            df,
+            x="date",
+            y="drift_ratio",
+            markers=True,
+            title="Drift Ratio Trend"
+        )
 
-    st.subheader("📉 Drifted Columns")
+        st.plotly_chart(fig1, use_container_width=True)
 
-    fig2 = px.bar(
-        df,
-        x="date",
-        y="drifted_columns",
-        title="Drifted Columns Count"
-    )
+        # =========================
+        # DRIFTED COLUMNS
+        # =========================
 
-    st.plotly_chart(fig2, use_container_width=True)
+        st.subheader("📉 Drifted Columns")
 
-    # =========================
-    # ALERT SUMMARY
-    # =========================
+        fig2 = px.bar(
+            df,
+            x="date",
+            y="drifted_columns",
+            title="Drifted Columns Count"
+        )
 
-    st.subheader("🚨 Alert Summary")
+        st.plotly_chart(fig2, use_container_width=True)
 
-    alert_count = (df["alert"] == "YES").sum()
+        # =========================
+        # ALERT SUMMARY
+        # =========================
 
-    st.metric(
-        label="Total Alerts Triggered",
-        value=alert_count
-    )
+        st.subheader("🚨 Alert Summary")
 
-    # =========================
-    # ALERT EVENTS
-    # =========================
+        alert_count = (df["alert"] == "YES").sum()
 
-    st.subheader("⚠️ High Drift Events")
+        st.metric(
+            label="Total Alerts Triggered",
+            value=alert_count
+        )
 
-    alerts_df = df[df["alert"] == "YES"]
+        # =========================
+        # ALERT EVENTS
+        # =========================
 
-    st.dataframe(alerts_df, use_container_width=True)
+        st.subheader("⚠️ High Drift Events")
+
+        alerts_df = df[df["alert"] == "YES"]
+
+        st.dataframe(alerts_df, use_container_width=True)
+
+    else:
+
+        st.warning("⚠️ No monitoring history available yet.")
