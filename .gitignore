@@ -1,6 +1,24 @@
-venv/
+# Python
 __pycache__/
-*.pyc
+.ipynb_checkpoints/
+
+# Virtual Environment
+venv/
+.venv/
+
+# MLflow
+mlruns/
+
+# Logs
+logs/
+data/logs/
+
+# Monitoring Artifacts
+reports/
+metrics/*.csv
+*.html
+current_data.csv
+
+# IDE
 .idea/
-.env
-*.log
+.vscode/
