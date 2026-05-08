@@ -155,8 +155,7 @@ if page == "🔍 Loan Prediction":
                     json=payload,
                     timeout=20
                 )
-                st.write("Status Code:", response.status_code)
-                st.write("Response Text:", response.text)
+                
 
             except requests.exceptions.RequestException as e:
 
