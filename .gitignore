@@ -15,7 +15,6 @@ data/logs/
 
 # Monitoring Artifacts
 reports/
-metrics/*.csv
 *.html
 current_data.csv
 
