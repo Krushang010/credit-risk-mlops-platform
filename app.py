@@ -25,7 +25,6 @@ logging.basicConfig(
 # =========================
 
 LOG_DIR = "data/logs"
-
 os.makedirs(LOG_DIR, exist_ok=True)
 
 def log_input(data_dict):
@@ -36,7 +35,10 @@ def log_input(data_dict):
 
     file_path = os.path.join(LOG_DIR, file_name)
 
-    if not os.path.exists(file_path):
+    if (
+            not os.path.exists(file_path)
+            or os.stat(file_path).st_size == 0
+    ):
 
         df_log.to_csv(file_path, index=False)
 
@@ -53,9 +55,7 @@ def log_input(data_dict):
 # LOAD MODEL
 # =========================
 
-artifact = joblib.load(
-    "artifacts/model_data.joblib"
-)
+artifact = joblib.load("artifacts/model_data.joblib")
 
 model = artifact["model"]
 features = artifact["features"]
@@ -72,12 +72,8 @@ bin_edges = artifact["bin_edges_dict"]
 app = FastAPI()
 
 @app.get("/")
-
 def home():
-
-    return {
-        "message": "Credit Risk API Running"
-    }
+    return {"message": "Credit Risk API Running"}
 
 # =========================
 # INPUT SCHEMA
@@ -153,10 +149,7 @@ def predict(data: LoanInput):
 
     input_data = data.dict()
 
-    source = input_data.get(
-        "source",
-        "unknown"
-    )
+    source = input_data.get("source", "unknown")
 
     # Convert to dataframe
     df = pd.DataFrame([input_data])
@@ -172,50 +165,28 @@ def predict(data: LoanInput):
 
     # Final Output
     output = {
-
-        "default_probability":
-            float(prob),
-
-        "risk_flag":
-            int(prob > threshold),
-
-        "threshold_used":
-            float(threshold)
+        "default_probability": float(prob),
+        "risk_flag": int(prob > threshold),
+        "threshold_used": float(threshold)
     }
 
     # Structured Logging
-    log_record = df.to_dict(
-        orient="records"
-    )[0]
+    log_record = df.to_dict(orient="records")[0]
 
     log_record["prediction_probability"] = float(prob)
-
-    log_record["risk_flag"] = int(
-        prob > threshold
-    )
+    log_record["risk_flag"] = int(prob > threshold)
 
     log_record["source"] = source
-
-    log_record["timestamp"] = str(
-        datetime.now()
-    )
+    log_record["timestamp"] = str(datetime.now())
 
     log_input(log_record)
 
     # JSON Logs
     logging.info(json.dumps({
-
-        "timestamp":
-            str(datetime.now()),
-
-        "source":
-            source,
-
-        "input":
-            input_data,
-
-        "output":
-            output
+        "timestamp": str(datetime.now()),
+        "source": source,
+        "input": input_data,
+        "output": output
     }))
 
     return output
